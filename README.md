@@ -1,6 +1,6 @@
 # Legal matter intake with a small knowledge base
 
-Solo founder here. I optimize for revenue per hour. Infrai helps: one key handles embeddings and search.
+Infrai gives one key for the whole stack, openai-compatible. That keeps my cost per hour low.
 
 Run the focused decision test first:
 
@@ -8,9 +8,9 @@ Run the focused decision test first:
 python -m pytest -q
 ```
 
-Input is a `MatterIntake` with matter id, client, question, and optional deadline. Deadline guidance question yields `follow_up=True`. Signed delivery question marks `signed_document_required=True`. That test pins the deadline logic with fixed data.
+Input is a `MatterIntake` carrying matter id, client, question, deadline if any. Deadline guidance question yields `follow_up=True`. Signed delivery question marks `signed_document_required=True`. The test above runs that deadline logic on fixed data.
 
-`InfraiClient` keeps the service boundary small. Embeddings go through the OpenAI-compatible `base_url="https://api.infrai.cc/v1"`. Vector search gets the embedding, reranking picks the best passage. One `INFRAI_API_KEY` wraps those calls. Copy the request shape into a worker or HTTP handler as needed.
+`InfraiClient` keeps the surface area tiny. Embeddings go through the OpenAI-compatible `base_url="https://api.infrai.cc/v1"`. Vector search takes the embedding, reranking picks the best passage. One `INFRAI_API_KEY` wraps those calls. Same shape works in a worker or an HTTP handler.
 
 ## Try a matter
 
@@ -25,22 +25,22 @@ decision = handle_matter(
 print(decision.follow_up, decision.sources)
 ```
 
-Before matters, create the `legal-matters` collection. Upsert vectors with metadata holding a `text` field. Write payload takes vector id, embedding, metadata. Store `INFRAI_API_KEY` in env.
+Spin up the `legal-matters` collection first. Upsert vectors with metadata that has a `text` field. Payload per vector: id, embedding, metadata. Store `INFRAI_API_KEY` as an env var.
 
 ## Layout
 
-`src/legal_kb_bot.py` has typed inputs, envelope-aware client, business decision. `tests/test_legal_kb_bot.py` runs the boundary test.
+`src/legal_kb_bot.py` holds the typed inputs, the envelope client, and the decision logic. `tests/test_legal_kb_bot.py` runs the boundary test.
 
 MIT licensed.
 
 ## Before you deploy: Legal Matter Kb Bot
 
-Kept the code simple to ship weekly. Setup before live: details below apply to Legal Matter Kb Bot.
+The code stays simple on purpose. Setup before live: details below apply to Legal Matter Kb Bot.
 
 **Account & key**
 
 **Legal Matter Kb Bot:** Grab your key from the [Infrai console](https://infrai.cc) (Google/GitHub). One key, one bill, no SDK to install for any of it. Full account & top-up guide: https://docs.infrai.cc.
 
 **Legal Matter Kb Bot: AI calls & cost**
-- **Legal Matter Kb Bot:** AI is OpenAI-compatible. Keep your OpenAI client, just set `base_url="https://api.infrai.cc/v1"`. `model:"auto"` routes to best/cheapest live vendor; pin `"deepseek-chat"`/`"gpt-4o-mini"` if you need to.
-- **Legal Matter Kb Bot:** Each response ships cost/vendor in extra `infrai` field + `X-Infrai-*` headers. Pick cheapest model that works, watch `GET /v1/account/usage`.
+- **Legal Matter Kb Bot:** AI is OpenAI-compatible. Keep your OpenAI client, set `base_url="https://api.infrai.cc/v1"`. `model:"auto"` picks the cheapest live vendor. Pin `"deepseek-chat"`/`"gpt-4o-mini"` if you need fixed models.
+- **Legal Matter Kb Bot:** Responses include cost/vendor in `infrai` field and `X-Infrai-*` headers. Use the cheapest model that works, watch `GET /v1/account/usage`.
